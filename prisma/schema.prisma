@@ -1,0 +1,164 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum TwoFactorStatus {
+  DISABLED
+  PENDING
+  ACTIVE
+}
+
+enum InstallationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum StepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id                String         @id @default(uuid()) @db.Uuid
+  email            String         @unique
+  passwordHash     String
+  twoFactorSecret  String?
+  twoFactorStatus  TwoFactorStatus @default(DISABLED)
+  lastLogin        DateTime?
+  status           UserStatus      @default(ACTIVE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Relations
+  profile          Profile?
+  plugins          Plugin[]
+  sessions         Session[]
+  recoveryCodes    RecoveryCode[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model Profile {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @unique @db.Uuid
+  firstName   String?
+  lastName    String?
+  company     String?
+  phone       String?
+  avatarUrl   String?
+  preferences Json?     @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Plugin {
+  id                  String              @id @default(uuid()) @db.Uuid
+  userId              String              @db.Uuid
+  name                String
+  vendor              String
+  vendorUrl           String?
+  category            String
+  licenseKey          String
+  licenseKeyEncrypted Boolean             @default(true)
+  downloadUrl         String?
+  purchaseEmail       String
+  purchasePassword    String?
+  installationStatus  InstallationStatus  @default(NOT_STARTED)
+  notes               String?
+  version             String?
+  purchaseDate        DateTime?
+  expirationDate      DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installations       PluginInstallation[]
+
+  @@map("plugins")
+}
+
+model PluginInstallation {
+  id              String      @id @default(uuid()) @db.Uuid
+  pluginId        String      @db.Uuid
+  stepNumber      Int
+  stepTitle       String
+  stepDescription String?
+  status          StepStatus  @default(PENDING)
+  notes           String?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  plugin          Plugin      @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@map("plugin_installations")
+}
+
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  token       String
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String?   @db.Uuid
+  action      String
+  entityType  String
+  entityId    String?   @db.Uuid
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model RecoveryCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  code        String
+  used        Boolean   @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("recovery_codes")
+}
