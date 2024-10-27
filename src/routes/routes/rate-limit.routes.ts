@@ -1,5 +1,5 @@
 import Router from "@koa/router";
-import { RateLimitService } from "@/services/rate-limit.servic.js";
+import { RateLimitService } from "@/services/rate-limit.service.js";
 
 export const rateLimitRoutes = new Router({ prefix: "/rate-limit" });
 

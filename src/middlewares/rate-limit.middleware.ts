@@ -1,5 +1,5 @@
 import type { Context, Next } from "koa";
-import { RateLimitService } from "@/services/rate-limit.servic.js";
+import { RateLimitService } from "@/services/rate-limit.service.js";
 
 interface RateLimitResponse {
   success: boolean;

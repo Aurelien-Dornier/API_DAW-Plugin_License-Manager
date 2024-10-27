@@ -100,7 +100,6 @@ model Plugin {
 }
 
 model PluginInstallation {
-  id              String      @id @default(uuid()) @db.Uuid
   pluginId        String      @db.Uuid
   stepNumber      Int
   stepTitle       String
@@ -114,6 +113,8 @@ model PluginInstallation {
   // Relations
   plugin          Plugin      @relation(fields: [pluginId], references: [id], onDelete: Cascade)
 
+  // Clé composée comme identifiant principal
+  @@id([pluginId, stepNumber])
   @@map("plugin_installations")
 }
 
