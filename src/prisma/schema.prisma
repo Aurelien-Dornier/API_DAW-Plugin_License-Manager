@@ -162,3 +162,16 @@ model RecoveryCode {
 
   @@map("recovery_codes")
 }
+
+model LoginAttempt {
+  id          String    @id @default(uuid()) @db.Uuid
+  ipAddress   String
+  userAgent   String?
+  email       String    
+  success     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+
+  @@map("login_attempts")
+  @@index([ipAddress, createdAt])
+}

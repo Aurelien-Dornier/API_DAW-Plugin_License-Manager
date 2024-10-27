@@ -15,5 +15,7 @@ export const authSchema = {
 
   verify2FA: z.object({
     token: z.string(),
-  })
+  }),
+
+  check2FAStatus: z.object({})
 } as const;

@@ -59,3 +59,14 @@ export interface CookieOptions {
   maxAge: number;
   sameSite: 'lax' | 'strict' | 'none';
 }
+
+// loginAttempts types
+export interface LoginAttempt {
+  id: string;
+  ipAddress: string;
+  userAgent?: string;
+  email: string;
+  success: boolean;
+  createdAt: Date;
+  expiresAt: Date;
+}

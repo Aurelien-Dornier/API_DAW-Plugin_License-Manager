@@ -1,9 +1,10 @@
 import type { Context } from "koa";
 import { AuthService } from "@/services/auth.service.js";
-import { loginRateLimit } from "@/middlewares/auth.middleware.js";
+import { loginRateLimit } from "@/middlewares/rate-limit.middleware.js";
 import { validate } from "@/schemas/validate.middleware.js";
 import { authSchema } from "@/schemas/auth.schema.js";
 import type { RegisterDto, LoginDto, Verify2FADto } from "@/types/auth.types.js";
+import { prisma } from "@/config/database.js";
 
 
 export const AuthController = {
@@ -24,12 +25,11 @@ export const AuthController = {
    */
   login: [
     validate(authSchema.login),
+    loginRateLimit, // ? middleware de limitation de connexion
     async (ctx: Context) => {
-      await loginRateLimit(ctx, async () => {
-        const response = await AuthService.login(ctx, ctx.request.body as LoginDto);
-        ctx.status = response.success ? 200 : 401;
-        ctx.body = response;
-      });
+      const response = await AuthService.login(ctx, ctx.request.body as LoginDto);
+      ctx.status = response.success ? 200 : 401;
+      ctx.body = response;
     }
   ],
 
@@ -74,5 +74,37 @@ export const AuthController = {
         ctx.body = { success: false, message: "Invalid 2FA token" };
       }
     }
+  ],
+
+  /**
+   * Route pour vérifier le status 2FA
+   */
+  check2FAStatus: [
+    async (ctx: Context) => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: ctx.state.user.id },
+          select: {
+            twoFactorStatus: true,
+            email: true
+          }
+        });
+
+        ctx.body = {
+          success: true,
+          data: {
+            twoFactorStatus: user?.twoFactorStatus,
+            email: user?.email
+          }
+        };
+      } catch (error) {
+        ctx.status = 500;
+        ctx.body = {
+          success: false,
+          message: "Failed to check 2FA status"
+        };
+      }
+    }
   ]
+
 };
