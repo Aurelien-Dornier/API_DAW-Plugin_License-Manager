@@ -1,5 +1,4 @@
 import { prisma } from "@/config/database.js";
-import { parse } from "date-fns";
 import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
 import { authenticator } from "otplib";
