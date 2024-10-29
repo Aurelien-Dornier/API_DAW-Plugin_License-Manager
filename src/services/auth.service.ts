@@ -62,9 +62,10 @@ export class AuthService {
         data: {
           accessToken,
           user: {
-            id: user.id,
+            id: user.id,  
             email: user.email,
             status: user.status,
+            role: user.role,
             profile: user.profile ? {
               id: user.profile.id,
               firstname: user.profile.firstName || undefined,
@@ -73,7 +74,7 @@ export class AuthService {
           }
         }
       };
-    } catch (error) {
+    } catch (error ) {
       console.error("Registration error:", error);
       return {
         success: false,
@@ -160,6 +161,7 @@ export class AuthService {
             id: user.id,
             email: user.email,
             status: user.status,
+            role: user.role,
             profile: user.profile ? {
               id: user.profile.id,
               firstname: user.profile.firstName || undefined,

@@ -2,14 +2,12 @@ import { prisma } from "@/config/database.js";
 import type { CreatePluginDto, UpdatePluginDto, UpdateInstallationDto } from "@/schemas/plugin.schema.js";
 import type { Plugin, PluginInstallation } from "@prisma/client";
 
-export class PluginService{
-  
-static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
+export class PluginService {
+  static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
     return await prisma?.$transaction(async (tx) => {
-      
-      /* 
-      * creer le plugin
-      */
+      /*
+       * creer le plugin
+       */
       const plugin = await tx.plugin.create({
         data: {
           userId,
@@ -26,21 +24,23 @@ static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
           purchaseDate: dto.purchaseDate,
           expirationDate: dto.expirationDate,
           installations: {
-            create: [{
-              stepNumber: 1,
-              stepTitle: "Telechargement",
-              status: "PENDING",
-            },
-            {
-              stepNumber: 2,
-              stepTitle: "Installation",
-              status: "PENDING",
-            }]
-          }
+            create: [
+              {
+                stepNumber: 1,
+                stepTitle: "Telechargement",
+                status: "PENDING",
+              },
+              {
+                stepNumber: 2,
+                stepTitle: "Installation",
+                status: "PENDING",
+              },
+            ],
+          },
         },
         include: {
           installations: true,
-        }
+        },
       });
       return plugin;
     });
@@ -54,26 +54,26 @@ static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
     userId: string,
     dto: UpdatePluginDto
   ): Promise<Plugin> {
-    console.log('Starting update process...');
-    console.log('Plugin ID:', pluginId);
-    console.log('User ID:', userId);
-    
+    console.log("Starting update process...");
+    console.log("Plugin ID:", pluginId);
+    console.log("User ID:", userId);
+
     // Debug: Afficher les types
-    console.log('Types:', {
+    console.log("Types:", {
       pluginIdType: typeof pluginId,
       userIdType: typeof userId,
       pluginIdValue: pluginId,
-      userIdValue: userId
+      userIdValue: userId,
     });
 
     // Vérifier si le plugin existe sans la condition userId d'abord
     const plugin = await prisma.plugin.findUnique({
       where: {
-        id: pluginId
-      }
+        id: pluginId,
+      },
     });
 
-    console.log('Found plugin:', plugin);
+    console.log("Found plugin:", plugin);
 
     if (!plugin) {
       throw new Error("Plugin non trouvé");
@@ -83,47 +83,52 @@ static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
       throw new Error("Non autorisé à modifier ce plugin");
     }
 
-    /* 
-    * Créer l'objet de mise à jour
-    */
+    /*
+     * Créer l'objet de mise à jour
+     */
     const updateData: Partial<Plugin> = {};
 
     // Ajouter uniquement les champs qui sont présents dans le DTO
-    if (dto.name !== undefined) updateData['name'] = dto.name;
-    if (dto.vendor !== undefined) updateData['vendor'] = dto.vendor;
-    if (dto.vendorUrl !== undefined) updateData['vendorUrl'] = dto.vendorUrl;
-    if (dto.category !== undefined) updateData['category'] = dto.category;
-    if (dto.licenseKey !== undefined) updateData['licenseKey'] = dto.licenseKey;
-    if (dto.downloadUrl !== undefined) updateData['downloadUrl'] = dto.downloadUrl;
-    if (dto.purchaseEmail !== undefined) updateData['purchaseEmail'] = dto.purchaseEmail;
-    if (dto.purchasePassword !== undefined) updateData['purchasePassword'] = dto.purchasePassword;
-    if (dto.notes !== undefined) updateData['notes'] = dto.notes;
-    if (dto.version !== undefined) updateData['version'] = dto.version;
-    if (dto.purchaseDate !== undefined) updateData['purchaseDate'] = new Date(dto.purchaseDate);
-    if (dto.expirationDate !== undefined) updateData['expirationDate'] = new Date(dto.expirationDate);
+    if (dto.name !== undefined) updateData["name"] = dto.name;
+    if (dto.vendor !== undefined) updateData["vendor"] = dto.vendor;
+    if (dto.vendorUrl !== undefined) updateData["vendorUrl"] = dto.vendorUrl;
+    if (dto.category !== undefined) updateData["category"] = dto.category;
+    if (dto.licenseKey !== undefined) updateData["licenseKey"] = dto.licenseKey;
+    if (dto.downloadUrl !== undefined)
+      updateData["downloadUrl"] = dto.downloadUrl;
+    if (dto.purchaseEmail !== undefined)
+      updateData["purchaseEmail"] = dto.purchaseEmail;
+    if (dto.purchasePassword !== undefined)
+      updateData["purchasePassword"] = dto.purchasePassword;
+    if (dto.notes !== undefined) updateData["notes"] = dto.notes;
+    if (dto.version !== undefined) updateData["version"] = dto.version;
+    if (dto.purchaseDate !== undefined)
+      updateData["purchaseDate"] = new Date(dto.purchaseDate);
+    if (dto.expirationDate !== undefined)
+      updateData["expirationDate"] = new Date(dto.expirationDate);
 
-    console.log('Update data:', updateData);
+    console.log("Update data:", updateData);
 
     try {
       // Effectuer la mise à jour
       const updatedPlugin = await prisma.plugin.update({
         where: {
-          id: pluginId
+          id: pluginId,
         },
         data: updateData,
         include: {
           installations: {
             orderBy: {
-              stepNumber: 'asc'
-            }
-          }
-        }
+              stepNumber: "asc",
+            },
+          },
+        },
       });
 
-      console.log('Update successful:', updatedPlugin);
+      console.log("Update successful:", updatedPlugin);
       return updatedPlugin;
     } catch (error: any) {
-      console.error('Update failed:', error);
+      console.error("Update failed:", error);
       throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
     }
   }
@@ -136,16 +141,16 @@ static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
     userId: string,
     dto: UpdateInstallationDto
   ): Promise<PluginInstallation> {
-    console.log('Starting installation update...');
-    console.log('Plugin ID:', pluginId);
-    console.log('User ID:', userId);
-    console.log('DTO:', dto);
+    console.log("Starting installation update...");
+    console.log("Plugin ID:", pluginId);
+    console.log("User ID:", userId);
+    console.log("DTO:", dto);
 
     // Vérifier si le plugin existe
     const plugin = await prisma.plugin.findUnique({
       where: {
-        id: pluginId
-      }
+        id: pluginId,
+      },
     });
 
     if (!plugin) {
@@ -162,81 +167,84 @@ static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
         where: {
           pluginId_stepNumber: {
             pluginId: pluginId,
-            stepNumber: dto.stepNumber
-          }
+            stepNumber: dto.stepNumber,
+          },
         },
         data: {
           status: dto.status,
           notes: dto.notes,
-          completedAt: dto.status === "COMPLETED" ? new Date() : null
-        }
+          completedAt: dto.status === "COMPLETED" ? new Date() : null,
+        },
       });
 
-      console.log('Installation step updated:', updatedStep);
+      console.log("Installation step updated:", updatedStep);
       return updatedStep;
     } catch (error: any) {
-      console.error('Installation update failed:', error);
-      throw new Error(`Erreur lors de la mise à jour de l'installation: ${error.message}`);
+      console.error("Installation update failed:", error);
+      throw new Error(
+        `Erreur lors de la mise à jour de l'installation: ${error.message}`
+      );
     }
   }
 
-    
   /**
    * * Récupérer un plugin avec ses étapes d'installation
    */
-  static async findOne(pluginId: string, userId: string): Promise<Plugin | null> {
+  static async findOne(
+    pluginId: string,
+    userId: string
+  ): Promise<Plugin | null> {
     await this.checkPluginOwnership(pluginId, userId);
 
     return await prisma.plugin.findUnique({
       where: { id: pluginId },
       include: {
         installations: {
-          orderBy: { stepNumber: 'asc' }
-        }
-      }
+          orderBy: { stepNumber: "asc" },
+        },
+      },
     });
   }
 
-
-
- /**
-  * * liste des plugins d'un utilisateur
-  */
- static async findAll(userId: string): Promise<Plugin[]> {
-  return await prisma.plugin.findMany({
-    where: { userId },
-    include: {
-      installations: {
-        orderBy: { stepNumber: 'asc' }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-}
-
-/**
- * * supprimer un plugin
- */
-static async delete(pluginId: string, userId: string): Promise<void> {
-  await this.checkPluginOwnership(pluginId, userId);
-  await prisma.plugin.delete({
-    where: { id: pluginId },
-  });
-}
-
-
- /**
-  * * verifier si l'utilisateur est le proprietaire du plugin
-  */
- private static async checkPluginOwnership(pluginId: string, userId: string): Promise<void> {
-  const plugin = await prisma?.plugin.findUnique({
-    where: { id: pluginId},
-    select: { userId: true },
-  });
-
-  if (!plugin || plugin.userId !== userId) {
-    throw new Error("Vous n'avez pas le droit de modifier ce plugin");
+  /**
+   * * liste des plugins d'un utilisateur
+   */
+  static async findAll(userId: string): Promise<Plugin[]> {
+    return await prisma.plugin.findMany({
+      where: { userId },
+      include: {
+        installations: {
+          orderBy: { stepNumber: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
   }
- }
-}
 
+  /**
+   * * supprimer un plugin
+   */
+  static async delete(pluginId: string, userId: string): Promise<void> {
+    await this.checkPluginOwnership(pluginId, userId);
+    await prisma.plugin.delete({
+      where: { id: pluginId },
+    });
+  }
+
+  /**
+   * * verifier si l'utilisateur est le proprietaire du plugin
+   */
+  private static async checkPluginOwnership(
+    pluginId: string,
+    userId: string
+  ): Promise<void> {
+    const plugin = await prisma?.plugin.findUnique({
+      where: { id: pluginId },
+      select: { userId: true },
+    });
+
+    if (!plugin || plugin.userId !== userId) {
+      throw new Error("Vous n'avez pas le droit de modifier ce plugin");
+    }
+  }
+}

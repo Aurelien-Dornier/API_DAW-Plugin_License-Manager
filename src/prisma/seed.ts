@@ -1,6 +1,7 @@
 // src/prisma/seed.ts
-import { PrismaClient, UserStatus, TwoFactorStatus } from '@prisma/client';
+import { PrismaClient, UserStatus, TwoFactorStatus, UserRole } from '@prisma/client';
 import { hash } from 'argon2';
+import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,7 @@ async function generateUsers() {
       email: 'admin@example.com',
       password: 'Admin@SuperSecurePassword123!',
       status: 'ACTIVE' as UserStatus,
+      role: 'ADMIN' as UserRole,
       profile: {
         firstName: 'Admin',
         lastName: 'User',
@@ -21,6 +23,7 @@ async function generateUsers() {
       email: 'user@example.com',
       password: 'User@SuperSecurePassword123!',
       status: 'ACTIVE' as UserStatus,
+      role: 'USER' as UserRole,
       profile: {
         firstName: 'Regular',
         lastName: 'User',
@@ -32,6 +35,7 @@ async function generateUsers() {
       email: 'blocked@example.com',
       password: 'Blocked@SuperSecurePassword123!',
       status: 'BLOCKED' as UserStatus,
+      role: 'USER' as UserRole,
       profile: {
         firstName: 'Blocked',
         lastName: 'User',
@@ -44,7 +48,8 @@ async function generateUsers() {
       password: '2FA@SuperSecurePassword123!',
       status: 'ACTIVE' as UserStatus,
       twoFactorStatus: 'ACTIVE' as TwoFactorStatus,
-      twoFactorSecret: 'JBSWY3DPEHPK3PXP', // Example secret, should be generated properly in production
+      twoFactorSecret: 'JBSWY3DPEHPK3PXP', 
+      role: 'USER' as UserRole,
       profile: {
         firstName: '2FA',
         lastName: 'User',
@@ -66,6 +71,7 @@ async function generateUsers() {
         email: user.email,
         passwordHash,
         status: user.status,
+        role: user.role,
         twoFactorStatus: user.twoFactorStatus || 'DISABLED',
         twoFactorSecret: user.twoFactorSecret,
         profile: {

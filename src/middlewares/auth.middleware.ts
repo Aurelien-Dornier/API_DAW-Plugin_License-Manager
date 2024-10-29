@@ -25,7 +25,7 @@ export async function authenticateToken(ctx: Context, next: Next): Promise<void>
     /* verifier si l'utilisateur existe */
     const user = await prisma.user.findUnique({
       where: { id: playload.userId },
-      select: { id: true, status: true, twoFactorStatus: true },
+      select: { id: true, status: true, twoFactorStatus: true, role: true },
     });
 
     /* verifier si l'utilisateur est bloqué */
@@ -38,6 +38,7 @@ export async function authenticateToken(ctx: Context, next: Next): Promise<void>
     /* ajouter l'utilisateur au contexte */
     ctx.state.user = {
       id: user.id,
+      role: user.role,
       twoFactorStatus: user.twoFactorStatus,
       status: user.status,
     };
