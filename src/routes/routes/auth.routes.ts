@@ -14,3 +14,4 @@ authRoutes.use(authenticateToken);
 authRoutes.post("/2fa/setup", ...AuthController.setup2FA);
 authRoutes.post("/2fa/verify", ...AuthController.verify2FA);
 authRoutes.get("/2fa/status", ...AuthController.check2FAStatus);
+authRoutes.get("/me", ...AuthController.me)

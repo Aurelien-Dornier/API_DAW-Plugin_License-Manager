@@ -14,6 +14,46 @@ import { AUTH_CONFIG } from "@/config/auth.config.js";
 
 export class AuthService {
 
+
+  static async fetchUser (userId: string): Promise<AuthResponse> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId},
+        include: { profile: true}
+      })
+      if(!user) {
+        return{
+          success: false,
+          message: "user not found"
+        };
+      }
+      return {
+        success: true,
+        message: "user fetched successfully",
+        data:{
+         user: {
+          id: user.id,
+          email: user.email,
+          status: user.status,
+          role: user.role,
+          profile: user.profile ? {
+            id: user.profile.id,
+            firstname: user.profile.firstName || undefined,
+            lastname: user.profile.lastName || undefined,
+          } : undefined
+         }
+        }
+      }
+    } catch (error) {
+      console.error("Fetch user error", error);
+      return { 
+        success: false,
+        message: "Failed to fetch user"
+      };
+    }
+  }
+
+
  
   /**
    * @description enregistrer un utilisateur
@@ -282,11 +322,6 @@ export class AuthService {
  
   /**
    * @description generation des codes de recuperation
-   * @private
-   * @static
-   * @param {string} userId
-   * @param {number} [count=10]
-   * @return {*}  {Promise<void>}
    * @memberof AuthService
    */
   private static async generateRecoveryCodes(userId: string, count = 10): Promise<void> {
@@ -310,10 +345,9 @@ export class AuthService {
   }
 
 
+
   /**
    * @description generer un token
-   * @private
-   * @static
    * @param {JWTTPayload} payload
    * @return {*}  {string}
    * @memberof AuthService

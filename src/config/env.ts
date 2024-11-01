@@ -10,15 +10,6 @@ if (dotenvResult.error) {
   process.exit(1);
 }
 
-// Log pour debug
-console.log("\n🔍 Raw environment variables:");
-console.log({
-  NODE_ENV: process.env.NODE_ENV,
-  JWT_SECRET: process.env.JWT_SECRET?.slice(0, 10) + "...",
-  SESSION_SECRET: process.env.SESSION_SECRET?.slice(0, 10) + "...",
-  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY?.slice(0, 10) + "...",
-});
-
 const envSchema = z.object({
   /* Base variables */
   NODE_ENV: z
@@ -33,7 +24,21 @@ const envSchema = z.object({
       return port;
     }),
   DATABASE_URL: z.string().url("DATABASE_URL must be a valid URL"),
-
+  ALLOWED_ORIGINS: z
+  .string()
+  .default("http://localhost:5173")
+  .transform((val) => {
+    const origins = val.split(",").map((origin) => origin.trim());
+    // verifie si urls valides
+    origins.forEach((origin) => {
+      try {
+        new URL (origin);
+      } catch (error) {
+        throw new Error(`invalid URL in ALLOWED_ORIGINS: ${origin}`)
+      }
+    });
+    return origins;
+  }),
   /* Auth related variables */
   JWT_SECRET: z.string().min(32, "JWT_SECRET should be at least 32 characters"),
   JWT_EXPIRES_IN: z
@@ -105,5 +110,6 @@ if (process.env.NODE_ENV !== "production") {
     DATABASE_URL: env.DATABASE_URL.replace(/\/\/.*@/, "//***:***@"),
     JWT_EXPIRES_IN: env.JWT_EXPIRES_IN,
     COOKIE_MAX_AGE: env.COOKIE_MAX_AGE,
+    ALLOWED_ORIGINS: env.ALLOWED_ORIGINS,
   });
 }

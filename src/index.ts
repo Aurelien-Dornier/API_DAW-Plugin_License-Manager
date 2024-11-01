@@ -1,15 +1,15 @@
-import Koa from "koa";
-import { router } from "@/routes/router.js";
-import bodyParser from "koa-bodyparser";
-import cors from "@koa/cors";
-import helmet from "koa-helmet";
 import { env } from "./config/env.js";
+import Koa from "koa";
+import { corsMiddleware } from "./middlewares/cors.middleware.js";
+import bodyParser from "koa-bodyparser";
+import { router } from "@/routes/router.js";
+import helmet from "koa-helmet";
 
 const app = new Koa();
 
 
 // Middlewares de bases
-app.use(cors());
+app.use(corsMiddleware()),
 app.use(helmet());
 app.use(bodyParser());
 

@@ -17,5 +17,7 @@ export const authSchema = {
     token: z.string(),
   }),
 
-  check2FAStatus: z.object({})
+  check2FAStatus: z.object({}),
+
+  me: z.object({}).strict(),
 } as const;

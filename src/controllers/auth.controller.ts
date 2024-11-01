@@ -5,6 +5,7 @@ import { validate } from "@/schemas/validate.middleware.js";
 import { authSchema } from "@/schemas/auth.schema.js";
 import type { RegisterDto, LoginDto, Verify2FADto } from "@/types/auth.types.js";
 import { prisma } from "@/config/database.js";
+import { authenticateToken } from "@/middlewares/auth.middleware.js";
 
 
 export const AuthController = {
@@ -15,8 +16,20 @@ export const AuthController = {
     validate(authSchema.register),
     async (ctx: Context) => {
       const response = await AuthService.register(ctx.request.body as RegisterDto);
+      console.log(response);
       ctx.status = response.success ? 201 : 400;
       ctx.body = response;
+    }
+  ],
+  /**
+   * Rpute pour recuperer un user. 
+   */
+  me: [
+    validate(authSchema.me),
+    async (ctx: Context) => {
+    const response = await AuthService.fetchUser(ctx.state.user.id)
+    ctx.status = response.success? 200 : 400;
+    ctx.body = response;  
     }
   ],
 
@@ -28,6 +41,7 @@ export const AuthController = {
     loginRateLimit, // ? middleware de limitation de connexion
     async (ctx: Context) => {
       const response = await AuthService.login(ctx, ctx.request.body as LoginDto);
+      console.log("response API LOGIN", response);
       ctx.status = response.success ? 200 : 401;
       ctx.body = response;
     }
