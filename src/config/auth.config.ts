@@ -20,7 +20,7 @@ export const COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",
   maxAge: env.COOKIE_MAX_AGE,
-  sameSite: "strict",
+  sameSite: "lax",
 };
 
 // Configuration d'authentification

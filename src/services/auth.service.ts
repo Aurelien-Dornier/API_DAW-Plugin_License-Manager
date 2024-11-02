@@ -126,99 +126,80 @@ export class AuthService {
   /**
    * @description connexion d'un utilisateur
    */
-  static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
-    try {
-      // * rechercher l'user par email
-      const user = await prisma.user.findUnique({
-        where: { email: dto.email },
-        include: { profile: true },
-      });
+  // Dans AuthService, méthode login
+static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: dto.email },
+      include: { profile: true },
+    });
 
-      // * si pas d'user trouvé
-      if (!user) {
-        return {
-          success: false,
-          message: "User not found"
-        }
-      }
-
-      // * verifier le status de l'user
-      if (user.status === "BLOCKED") {
-        return {
-          success: false,
-          message: "User blocked"
-        }
-      }
-
-      // * verifier le mot de passe
-      const isPasswordValid = await verify(user.passwordHash, dto.password);
-      if (!isPasswordValid) {
-        return {
-          success: false,
-          message: "Invalid password"
-        }
-      }
-
-      // * calculer la date d'expiration correctement
-      const expiresInMs = parseInt(AUTH_CONFIG.jwt.expiresIn.replace(/[dhms]/g, '')) * 24 * 60 * 60 * 1000; // Convertit "1d" en millisecondes
-      const expiresAt = new Date(Date.now() + expiresInMs);
-
-      // * creer une session avec la bonne date d'expiration
-      const session = await prisma.session.create({
-        data: {
-          userId: user.id,
-          token: "",
-          ipAddress: ctx.ip,
-          userAgent: ctx.get("user-agent"),
-          expiresAt: expiresAt,
-        }
-      });
-
-      // * generer le token
-      const accessToken = this.generateToken({ userId: user.id, type: "ACCESS" });
-
-      // * Mettre à jour la date de dernière connexion
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { lastLogin: new Date() }
-      });
-
-      // * mettre à jour la session avec le token
-      await prisma.session.update({
-        where: { id: session.id },
-        data: { token: accessToken },
-      });
-
-      // * definir le cookie 
-      ctx.cookies.set("access_token", accessToken, AUTH_CONFIG.cookie);
-
-      return {
-        success: true,
-        message: "User logged in successfully",
-        data: {
-          accessToken,
-          user: {
-            id: user.id,
-            email: user.email,
-            status: user.status,
-            role: user.role,
-            profile: user.profile ? {
-              id: user.profile.id,
-              firstname: user.profile.firstName || undefined,
-              lastname: user.profile.lastName || undefined
-            } : undefined
-          }
-        }
-      };
-
-    } catch (error) {
-      console.error("Login error:", error);
+    if (!user) {
       return {
         success: false,
-        message: "Login failed"
+        message: "User not found"
       };
     }
+
+    if (user.status === "BLOCKED") {
+      return {
+        success: false,
+        message: "User blocked"
+      };
+    }
+
+    const isPasswordValid = await verify(user.passwordHash, dto.password);
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: "Invalid password"
+      };
+    }
+
+    // Générer le token
+    const accessToken = this.generateToken({ userId: user.id, type: "ACCESS" });
+
+    // Définir explicitement le cookie avec les bonnes options
+    ctx.cookies.set("access_token", accessToken, {
+      ...AUTH_CONFIG.cookie,
+      overwrite: true
+    });
+
+    // Log des cookies en développement
+    if (process.env.NODE_ENV === "development") {
+      console.log("Cookie set:", {
+        token: accessToken.substring(0, 10) + "...",
+        options: AUTH_CONFIG.cookie,
+        allCookies: ctx.headers.cookie
+      });
+    }
+
+    return {
+      success: true,
+      message: "User logged in successfully",
+      data: {
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          status: user.status,
+          role: user.role,
+          profile: user.profile ? {
+            id: user.profile.id,
+            firstname: user.profile.firstName || undefined,
+            lastname: user.profile.lastName || undefined
+          } : undefined
+        }
+      }
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+    return {
+      success: false,
+      message: "Login failed"
+    };
   }
+}
 
   /**
    * @description deconnexion d'un utilisateur

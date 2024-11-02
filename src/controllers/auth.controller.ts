@@ -5,7 +5,6 @@ import { validate } from "@/schemas/validate.middleware.js";
 import { authSchema } from "@/schemas/auth.schema.js";
 import type { RegisterDto, LoginDto, Verify2FADto } from "@/types/auth.types.js";
 import { prisma } from "@/config/database.js";
-import { authenticateToken } from "@/middlewares/auth.middleware.js";
 
 
 export const AuthController = {
