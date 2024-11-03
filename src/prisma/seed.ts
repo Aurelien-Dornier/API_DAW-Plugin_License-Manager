@@ -13,8 +13,8 @@ async function generateUsers() {
       status: 'ACTIVE' as UserStatus,
       role: 'ADMIN' as UserRole,
       profile: {
-        firstName: 'Admin',
-        lastName: 'User',
+        firstName: 'Eikichi',
+        lastName: 'Onizuka',
         company: 'Admin Corp',
         phone: '+33123456789'
       }

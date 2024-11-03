@@ -10,7 +10,7 @@ pluginRoutes.use(authenticateToken);
 
 // Routes CRUD de base
 pluginRoutes.post("/", checkRole(["ADMIN", "USER"]), ...PluginController.create);
-pluginRoutes.get("/", checkRole(["ADMIN"]), ...PluginController.findAll);
+pluginRoutes.get("/", checkRole(["ADMIN", "USER"]), ...PluginController.findAll);
 pluginRoutes.get("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.findOne);
 pluginRoutes.patch("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.update);
 pluginRoutes.delete("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.delete);
