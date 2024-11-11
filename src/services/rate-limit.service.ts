@@ -1,5 +1,5 @@
 // src/services/rate-limit.service.ts
-import { prisma } from "@/config/database.js";
+import { prisma } from "../config/database";
 import type { Context } from "koa";
 
 

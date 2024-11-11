@@ -1,8 +1,8 @@
 import type { Context, Next } from "koa";
 import jwt from "jsonwebtoken";
-import { prisma } from "@/config/database.js";
-import { AUTH_CONFIG } from "@/config/auth.config.js";
-import type { JWTTPayload } from "@/types/auth.types.js";
+import { prisma } from "../config/database";
+import { AUTH_CONFIG } from "../config/auth.config";
+import type { JWTTPayload } from "../types/auth.types";
 
 export async function authenticateToken(ctx: Context, next: Next): Promise<void> {
   try {

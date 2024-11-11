@@ -1,6 +1,6 @@
 import type { Context } from "koa";
 import cors from "@koa/cors";
-import { env } from "@/config/env.js";
+import { env } from "../config/env";
 
 export const corsMiddleware = () => {
   const allowedOrigins = env.ALLOWED_ORIGINS;

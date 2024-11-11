@@ -1,14 +1,14 @@
 -- CreateEnum
+CREATE TYPE "PluginStatus" AS ENUM ('NOT_INSTALLED', 'INSTALLED');
+
+-- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'BLOCKED');
 
 -- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER');
+
+-- CreateEnum
 CREATE TYPE "TwoFactorStatus" AS ENUM ('DISABLED', 'PENDING', 'ACTIVE');
-
--- CreateEnum
-CREATE TYPE "InstallationStatus" AS ENUM ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED');
-
--- CreateEnum
-CREATE TYPE "StepStatus" AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -19,6 +19,7 @@ CREATE TABLE "users" (
     "twoFactorStatus" "TwoFactorStatus" NOT NULL DEFAULT 'DISABLED',
     "lastLogin" TIMESTAMP(3),
     "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "role" "UserRole" NOT NULL DEFAULT 'USER',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -48,37 +49,31 @@ CREATE TABLE "plugins" (
     "name" TEXT NOT NULL,
     "vendor" TEXT NOT NULL,
     "vendorUrl" TEXT,
-    "category" TEXT NOT NULL,
     "licenseKey" TEXT NOT NULL,
     "licenseKeyEncrypted" BOOLEAN NOT NULL DEFAULT true,
     "downloadUrl" TEXT,
     "purchaseEmail" TEXT NOT NULL,
     "purchasePassword" TEXT,
-    "installationStatus" "InstallationStatus" NOT NULL DEFAULT 'NOT_STARTED',
+    "status" "PluginStatus" NOT NULL DEFAULT 'NOT_INSTALLED',
     "notes" TEXT,
     "version" TEXT,
     "purchaseDate" TIMESTAMP(3),
     "expirationDate" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "categoryId" UUID NOT NULL,
 
     CONSTRAINT "plugins_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "plugin_installations" (
+CREATE TABLE "categories" (
     "id" UUID NOT NULL,
-    "pluginId" UUID NOT NULL,
-    "stepNumber" INTEGER NOT NULL,
-    "stepTitle" TEXT NOT NULL,
-    "stepDescription" TEXT,
-    "status" "StepStatus" NOT NULL DEFAULT 'PENDING',
-    "notes" TEXT,
-    "completedAt" TIMESTAMP(3),
+    "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "plugin_installations_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "categories_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -121,11 +116,27 @@ CREATE TABLE "recovery_codes" (
     CONSTRAINT "recovery_codes_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "login_attempts" (
+    "id" UUID NOT NULL,
+    "ipAddress" TEXT NOT NULL,
+    "userAgent" TEXT,
+    "email" TEXT NOT NULL,
+    "success" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "login_attempts_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "profiles_userId_key" ON "profiles"("userId");
+
+-- CreateIndex
+CREATE INDEX "login_attempts_ipAddress_createdAt_idx" ON "login_attempts"("ipAddress", "createdAt");
 
 -- AddForeignKey
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -134,7 +145,7 @@ ALTER TABLE "profiles" ADD CONSTRAINT "profiles_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "plugins" ADD CONSTRAINT "plugins_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "plugin_installations" ADD CONSTRAINT "plugin_installations_pluginId_fkey" FOREIGN KEY ("pluginId") REFERENCES "plugins"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "plugins" ADD CONSTRAINT "plugins_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

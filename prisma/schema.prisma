@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,6 +11,11 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum PluginStatus {
+  NOT_INSTALLED
+  INSTALLED
 }
 
 enum UserStatus {
@@ -22,19 +33,6 @@ enum TwoFactorStatus {
   DISABLED
   PENDING
   ACTIVE
-}
-
-enum InstallationStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum StepStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  FAILED
 }
 
 model User {
@@ -78,49 +76,41 @@ model Profile {
 }
 
 model Plugin {
-  id                  String              @id @default(uuid()) @db.Uuid
-  userId              String              @db.Uuid
+  id                  String        @id @default(uuid()) @db.Uuid
+  userId              String        @db.Uuid
   name                String
   vendor              String
   vendorUrl           String?
-  category            String
   licenseKey          String
-  licenseKeyEncrypted Boolean             @default(true)
+  licenseKeyEncrypted Boolean       @default(true)
   downloadUrl         String?
   purchaseEmail       String
   purchasePassword    String?
-  installationStatus  InstallationStatus  @default(NOT_STARTED)
+  status              PluginStatus  @default(NOT_INSTALLED)  
   notes               String?
   version             String?
   purchaseDate        DateTime?
   expirationDate      DateTime?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
+  categoryId          String        @db.Uuid
   // Relations
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  installations       PluginInstallation[]
-
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category            Category      @relation("CategoryPlugins", fields: [categoryId], references: [id], onDelete: Cascade)
   @@map("plugins")
 }
 
-model PluginInstallation {
-  pluginId        String      @db.Uuid
-  stepNumber      Int
-  stepTitle       String
-  stepDescription String?
-  status          StepStatus  @default(PENDING)
-  notes           String?
-  completedAt     DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations
-  plugin          Plugin      @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+  plugins     Plugin[]  @relation("CategoryPlugins")
 
-  // Clé composée comme identifiant principal
-  @@id([pluginId, stepNumber])
-  @@map("plugin_installations")
+  @@map("categories")
 }
 
 model Session {

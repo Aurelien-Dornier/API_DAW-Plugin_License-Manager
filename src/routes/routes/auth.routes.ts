@@ -1,6 +1,6 @@
 import Router from "@koa/router";
-import { AuthController } from "@/controllers/auth.controller.js";
-import { authenticateToken } from "@/middlewares/auth.middleware.js";
+import { AuthController } from "../../controllers/auth.controller";
+import { authenticateToken } from "../../middlewares/auth.middleware";
 
 export const authRoutes = new Router({ prefix: "/auth" });
 
@@ -15,3 +15,5 @@ authRoutes.post("/2fa/setup", ...AuthController.setup2FA);
 authRoutes.post("/2fa/verify", ...AuthController.verify2FA);
 authRoutes.get("/2fa/status", ...AuthController.check2FAStatus);
 authRoutes.get("/me", ...AuthController.me)
+
+

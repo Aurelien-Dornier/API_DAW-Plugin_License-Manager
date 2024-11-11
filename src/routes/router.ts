@@ -1,7 +1,7 @@
 import Router from "@koa/router";
-import { authRoutes } from "@/routes/routes/auth.routes.js";
-import { pluginRoutes } from "@/routes/routes/plugin.routes.js";
-import { rateLimitRoutes } from "@/routes/routes/rate-limit.routes.js";
+import { authRoutes } from "./routes/auth.routes";
+import { pluginRoutes } from "./routes/plugin.routes";
+import { rateLimitRoutes } from "./routes/rate-limit.routes";
 
 export const router = new Router({ prefix: "/api" });
 

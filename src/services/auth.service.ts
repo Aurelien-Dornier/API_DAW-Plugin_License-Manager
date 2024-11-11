@@ -1,4 +1,4 @@
-import { prisma } from "@/config/database.js";
+import { prisma } from "../config/database";
 import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
 import { authenticator } from "otplib";
@@ -9,11 +9,10 @@ import type {
   RegisterDto,
   AuthResponse,
   JWTTPayload,
-} from "@/types/auth.types.js";
-import { AUTH_CONFIG } from "@/config/auth.config.js";
+} from "../types/auth.types";
+import { AUTH_CONFIG } from "../config/auth.config";
 
 export class AuthService {
-
 
   static async fetchUser (userId: string): Promise<AuthResponse> {
     try {
@@ -24,7 +23,8 @@ export class AuthService {
       if(!user) {
         return{
           success: false,
-          message: "user not found"
+          message: "user not found",
+          data: null
         };
       }
       return {
@@ -48,20 +48,12 @@ export class AuthService {
       console.error("Fetch user error", error);
       return { 
         success: false,
-        message: "Failed to fetch user"
+        message: "Failed to fetch user",
+        data: null
       };
     }
   }
-
-
  
-  /**
-   * @description enregistrer un utilisateur
-   * @static
-   * @param {RegisterDto} dto
-   * @return {*}  {Promise<AuthResponse>}
-   * @memberof AuthService
-   */
   static async register(dto: RegisterDto): Promise<AuthResponse> {
     try {
       const existingUser = await prisma.user.findFirst({
@@ -72,6 +64,7 @@ export class AuthService {
         return {
           success: false,
           message: "User already exists",
+          data: null
         };
       }
 
@@ -118,15 +111,12 @@ export class AuthService {
       console.error("Registration error:", error);
       return {
         success: false,
-        message: "Registration failed"
+        message: "Registration failed",
+        data: null
       };
     }
   }
 
-  /**
-   * @description connexion d'un utilisateur
-   */
-  // Dans AuthService, méthode login
 static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
   try {
     const user = await prisma.user.findUnique({
@@ -137,14 +127,16 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     if (!user) {
       return {
         success: false,
-        message: "User not found"
+        message: "User not found",
+        data: null
       };
     }
 
     if (user.status === "BLOCKED") {
       return {
         success: false,
-        message: "User blocked"
+        message: "User blocked",
+        data: null
       };
     }
 
@@ -152,7 +144,8 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     if (!isPasswordValid) {
       return {
         success: false,
-        message: "Invalid password"
+        message: "Invalid password",
+        data: null
       };
     }
 
@@ -196,18 +189,12 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     console.error("Login error:", error);
     return {
       success: false,
-      message: "Login failed"
+      message: "Login failed",
+      data: null
     };
   }
 }
-
-  /**
-   * @description deconnexion d'un utilisateur
-   * @static
-   * @param {Context} ctx
-   * @return {*}  {Promise<AuthResponse>}
-   * @memberof AuthService
-   */
+ 
   static async logout(ctx: Context): Promise<AuthResponse> {
     try {
       const token = ctx.cookies.get("access_token");
@@ -224,21 +211,20 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
       }
       return {
         success: true,
-        message: "User logged out successfully"
+        message: "User logged out successfully",
+        data: null
       }
     } catch (error) {
       console.error("Logout error:", error);
       return {
         success: false,
-        message: "Logout failed"
+        message: "Logout failed",
+        data : null
       }
     }
 
   }
-
-  /**
-   * @description configuration double authentification
-   */
+  
   static async setup2FA(userId: string): Promise<{ qrCode: string; secret: string }> {
     // * generer le secret
     const secret = authenticator.generateSecret();
@@ -250,7 +236,7 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     // * generer le code QR
     const otpauth = authenticator.keyuri(
       user!.email,
-      "YourAppName",
+      "Daw Manager",
       secret
     );
 
@@ -268,9 +254,6 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     return { qrCode, secret };
   }
 
-  /**
-   * @description verification double authentification
-   */
   static async verify2FA(userId: string, token: string): Promise<boolean> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -300,11 +283,6 @@ static async login(ctx: Context, dto: LoginDto): Promise<AuthResponse> {
     return isValid;
   }
 
- 
-  /**
-   * @description generation des codes de recuperation
-   * @memberof AuthService
-   */
   private static async generateRecoveryCodes(userId: string, count = 10): Promise<void> {
     const codes = Array.from({ length: count }, () =>
       Math.random().toString(36).substring(2, 8).toUpperCase()

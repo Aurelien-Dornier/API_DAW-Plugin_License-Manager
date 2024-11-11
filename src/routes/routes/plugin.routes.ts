@@ -1,8 +1,8 @@
 // src/routes/plugin.routes.ts
 import Router from "@koa/router";
-import { PluginController } from "@/controllers/plugin.controller.js";
-import { authenticateToken } from "@/middlewares/auth.middleware.js";
-import { checkRole } from "@/middlewares/checkRole.middleware.js";
+import { PluginController } from "../../controllers/plugin.controller";
+import { authenticateToken } from "../../middlewares/auth.middleware";
+import { checkRole } from "../../middlewares/checkRole.middleware";
 export const pluginRoutes = new Router({ prefix: "/plugins" });
 
 // Toutes les routes nécessitent une authentification
@@ -15,5 +15,3 @@ pluginRoutes.get("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.findO
 pluginRoutes.patch("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.update);
 pluginRoutes.delete("/:id", checkRole(["ADMIN", "USER"]), ...PluginController.delete);
 
-// Route spécifique pour la mise à jour des étapes d'installation
-pluginRoutes.patch("/:id/installation", checkRole(["ADMIN", "USER"]), ...PluginController.updateInstallation);

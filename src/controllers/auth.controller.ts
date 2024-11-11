@@ -1,11 +1,14 @@
 import type { Context } from "koa";
-import { AuthService } from "@/services/auth.service.js";
-import { loginRateLimit } from "@/middlewares/rate-limit.middleware.js";
-import { validate } from "@/schemas/validate.middleware.js";
-import { authSchema } from "@/schemas/auth.schema.js";
-import type { RegisterDto, LoginDto, Verify2FADto } from "@/types/auth.types.js";
-import { prisma } from "@/config/database.js";
-
+import { AuthService } from "../services/auth.service";
+import { loginRateLimit } from "../middlewares/rate-limit.middleware";
+import { validate } from "../schemas/validate.middleware";
+import { authSchema } from "../schemas/auth.schema";
+import type {
+  RegisterDto,
+  LoginDto,
+  Verify2FADto,
+} from "../types/auth.types";
+import { prisma } from "../config/database";
 
 export const AuthController = {
   /**
@@ -14,22 +17,24 @@ export const AuthController = {
   register: [
     validate(authSchema.register),
     async (ctx: Context) => {
-      const response = await AuthService.register(ctx.request.body as RegisterDto);
+      const response = await AuthService.register(
+        ctx.request.body as RegisterDto
+      );
       console.log(response);
       ctx.status = response.success ? 201 : 400;
       ctx.body = response;
-    }
+    },
   ],
   /**
-   * Rpute pour recuperer un user. 
+   * Rpute pour recuperer un user.
    */
   me: [
-    validate(authSchema.me),
+  
     async (ctx: Context) => {
-    const response = await AuthService.fetchUser(ctx.state.user.id)
-    ctx.status = response.success? 200 : 400;
-    ctx.body = response;  
-    }
+      const response = await AuthService.fetchUser(ctx.state.user.id);
+      ctx.status = response.success ? 200 : 400;
+      ctx.body = response;
+    },
   ],
 
   /**
@@ -39,11 +44,14 @@ export const AuthController = {
     validate(authSchema.login),
     loginRateLimit, // ? middleware de limitation de connexion
     async (ctx: Context) => {
-      const response = await AuthService.login(ctx, ctx.request.body as LoginDto);
+      const response = await AuthService.login(
+        ctx,
+        ctx.request.body as LoginDto
+      );
       console.log("response API LOGIN", response);
       ctx.status = response.success ? 200 : 401;
       ctx.body = response;
-    }
+    },
   ],
 
   /**
@@ -54,7 +62,7 @@ export const AuthController = {
       const response = await AuthService.logout(ctx);
       ctx.status = response.success ? 200 : 500;
       ctx.body = response;
-    }
+    },
   ],
 
   /**
@@ -63,13 +71,15 @@ export const AuthController = {
   setup2FA: [
     async (ctx: Context) => {
       try {
-        const { qrCode, secret } = await AuthService.setup2FA(ctx.state.user.id);
+        const { qrCode, secret } = await AuthService.setup2FA(
+          ctx.state.user.id
+        );
         ctx.body = { success: true, data: { qrCode, secret } };
       } catch (error) {
         ctx.status = 500;
         ctx.body = { success: false, message: "Failed to setup 2FA" };
       }
-    }
+    },
   ],
 
   /**
@@ -86,7 +96,7 @@ export const AuthController = {
         ctx.status = 400;
         ctx.body = { success: false, message: "Invalid 2FA token" };
       }
-    }
+    },
   ],
 
   /**
@@ -99,25 +109,24 @@ export const AuthController = {
           where: { id: ctx.state.user.id },
           select: {
             twoFactorStatus: true,
-            email: true
-          }
+            email: true,
+          },
         });
 
         ctx.body = {
           success: true,
           data: {
             twoFactorStatus: user?.twoFactorStatus,
-            email: user?.email
-          }
+            email: user?.email,
+          },
         };
       } catch (error) {
         ctx.status = 500;
         ctx.body = {
           success: false,
-          message: "Failed to check 2FA status"
+          message: "Failed to check 2FA status",
         };
       }
-    }
-  ]
-
+    },
+  ],
 };

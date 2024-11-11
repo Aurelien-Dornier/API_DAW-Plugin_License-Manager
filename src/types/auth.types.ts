@@ -24,8 +24,7 @@ export interface RegisterDto {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  data?: {
-    accessToken?: string;
+  data: {
     user?: {
       id: string;
       email: string;
@@ -37,7 +36,8 @@ export interface AuthResponse {
         lastname?: string;
       };
     };
-  };
+    accessToken?: string;
+  } | null;
 }
 
 // configuration types 

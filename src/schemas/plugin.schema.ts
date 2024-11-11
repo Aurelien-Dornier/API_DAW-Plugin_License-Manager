@@ -14,6 +14,7 @@ export const pluginSchema = {
     version: z.string().optional(),
     purchaseDate: z.string().datetime().optional(),
     expirationDate: z.string().datetime().optional(),
+    status: z.enum(["NOT_INSTALLED", "INSTALLED"]).default("NOT_INSTALLED")
   }),
 
   update: z.object({
@@ -29,16 +30,10 @@ export const pluginSchema = {
     version: z.string().optional(),
     purchaseDate: z.string().datetime().optional(),
     expirationDate: z.string().datetime().optional(),
-  }),
-
-  updateInstallation: z.object({
-    stepNumber: z.number().min(1).max(2),
-    status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED"]),
-    notes: z.string().optional(),
+    status: z.enum(["NOT_INSTALLED", "INSTALLED"]).optional()
   }),
 } as const;
 
 // Types d'export pour TypeScript
 export type CreatePluginDto = z.infer<typeof pluginSchema.create>;
 export type UpdatePluginDto = z.infer<typeof pluginSchema.update>;
-export type UpdateInstallationDto = z.infer<typeof pluginSchema.updateInstallation>;

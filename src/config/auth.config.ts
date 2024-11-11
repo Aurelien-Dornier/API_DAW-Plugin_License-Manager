@@ -1,5 +1,5 @@
-import { env } from "./env.js";
-import type { SessionConfig, CookieOptions } from "../types/auth.types.js";
+import { env } from "./env";
+import type { SessionConfig, CookieOptions } from "../types/auth.types";
 
 // Configuration de session typée
 export const SESSION_CONFIG: SessionConfig = {
@@ -20,7 +20,7 @@ export const COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",
   maxAge: env.COOKIE_MAX_AGE,
-  sameSite: "lax",
+  sameSite: "strict",
 };
 
 // Configuration d'authentification

@@ -8,3 +8,4 @@ export const checkRole = (allowedRoles: string[]) => async (ctx: Context, next: 
   }
   await next();
 };
+
