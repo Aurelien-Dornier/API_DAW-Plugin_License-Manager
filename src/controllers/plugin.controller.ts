@@ -122,4 +122,23 @@ export const PluginController = {
       }
     },
   ],
+
+  findAllCategories: [
+    async (ctx: Context) => {
+      try {
+        const categories = await PluginService.findAllCategories();
+        ctx.body = {
+          success: true,
+          message: "Catégories récupérées avec succès",
+          data: categories,
+        };
+      } catch (error) {
+        ctx.status = 500;
+        ctx.body = {
+          success: false,
+          message: "Failed to retrieve categories",
+        };
+      }
+    }
+  ]
 };

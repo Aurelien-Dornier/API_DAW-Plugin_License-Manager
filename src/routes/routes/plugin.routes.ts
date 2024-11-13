@@ -7,6 +7,8 @@ export const pluginRoutes = new Router({ prefix: "/plugins" });
 
 // Toutes les routes nécessitent une authentification
 pluginRoutes.use(authenticateToken);
+// Routes supplémentaires
+pluginRoutes.get("/categories", checkRole(["ADMIN", "USER"]), ...PluginController.findAllCategories);
 
 // Routes CRUD de base
 pluginRoutes.post("/", checkRole(["ADMIN", "USER"]), ...PluginController.create);

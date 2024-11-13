@@ -112,7 +112,7 @@ async function generateUsers() {
             category: {
               connect: { name: plugin.category }
             }
-          }))        
+          })) 
         } : undefined
       }
     });

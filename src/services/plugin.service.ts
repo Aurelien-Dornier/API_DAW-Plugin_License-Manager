@@ -1,6 +1,6 @@
 import { prisma } from "../config/database";
 import type { CreatePluginDto, UpdatePluginDto } from "../schemas/plugin.schema";
-import type { Plugin } from "@prisma/client";
+import type { Category, Plugin } from "@prisma/client";
 
 export class PluginService {
   static async create(userId: string, dto: CreatePluginDto): Promise<Plugin> {
@@ -10,7 +10,7 @@ export class PluginService {
         name: dto.name,
         vendor: dto.vendor,
         vendorUrl: dto.vendorUrl,
-        category: dto.category,
+        categoryId: dto.categoryId,
         licenseKey: dto.licenseKey,
         downloadUrl: dto.downloadUrl,
         purchaseEmail: dto.purchaseEmail,
@@ -52,7 +52,7 @@ export class PluginService {
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.vendor !== undefined) updateData.vendor = dto.vendor;
     if (dto.vendorUrl !== undefined) updateData.vendorUrl = dto.vendorUrl;
-    if (dto.category !== undefined) updateData.category = dto.category;
+    if (dto.categoryId !== undefined) updateData.categoryId = dto.categoryId;
     if (dto.licenseKey !== undefined) updateData.licenseKey = dto.licenseKey;
     if (dto.downloadUrl !== undefined) updateData.downloadUrl = dto.downloadUrl;
     if (dto.purchaseEmail !== undefined) updateData.purchaseEmail = dto.purchaseEmail;
@@ -74,20 +74,31 @@ export class PluginService {
     }
   }
 
-  static async findOne(
-    pluginId: string,
-    userId: string
-  ): Promise<Plugin | null> {
+  static async findOne(pluginId: string, userId: string): Promise<Plugin | null> {
     await this.checkPluginOwnership(pluginId, userId);
     return await prisma.plugin.findUnique({
-      where: { id: pluginId }
+      where: { id: pluginId },
+      include: {
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
   }
 
   static async findAll(userId: string): Promise<Plugin[]> {
     return await prisma.plugin.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
     });
   }
 
@@ -110,5 +121,11 @@ export class PluginService {
     if (!plugin || plugin.userId !== userId) {
       throw new Error("Vous n'avez pas le droit de modifier ce plugin");
     }
+  }
+
+  static async findAllCategories(): Promise<Category[]> {
+    return await prisma.category.findMany({
+      orderBy: { name: "asc" }
+    });
   }
 }
