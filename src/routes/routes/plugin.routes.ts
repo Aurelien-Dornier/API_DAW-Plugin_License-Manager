@@ -1,4 +1,3 @@
-// src/routes/plugin.routes.ts
 import Router from "@koa/router";
 import { PluginController } from "../../controllers/plugin.controller";
 import { authenticateToken } from "../../middlewares/auth.middleware";
