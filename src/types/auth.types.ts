@@ -1,8 +1,10 @@
+// auth.types.ts
 export interface JWTTPayload {
   userId: string;
   type: 'ACCESS' | 'REFRESH';
   iat?: number;
   exp?: number;
+  jti?: string; // JWT ID unique pour la révocation
 }
 
 export interface LoginDto {
@@ -21,6 +23,11 @@ export interface RegisterDto {
   lastname?: string;
 }
 
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -36,11 +43,11 @@ export interface AuthResponse {
         lastname?: string;
       };
     };
-    accessToken?: string;
+    tokens?: TokenPair;
   } | null;
 }
 
-// configuration types 
+// Configuration types 
 export interface SessionConfig {
   key: string;
   maxAge: number;
@@ -54,6 +61,13 @@ export interface SessionConfig {
   sameSite: 'lax' | 'strict' | 'none';
 }
 
+export interface TokenConfig {
+  secret: string;
+  accessTokenExpiration: string;
+  refreshTokenExpiration: string;
+  refreshTokenLength: number;
+}
+
 export interface CookieOptions {
   httpOnly: boolean;
   secure: boolean;
@@ -61,7 +75,7 @@ export interface CookieOptions {
   sameSite: 'lax' | 'strict' | 'none';
 }
 
-// loginAttempts types
+// Login attempts types
 export interface LoginAttempt {
   id: string;
   ipAddress: string;

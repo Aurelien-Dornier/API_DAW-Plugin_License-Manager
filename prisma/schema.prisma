@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -53,6 +47,7 @@ model User {
   sessions         Session[]
   recoveryCodes    RecoveryCode[]
   auditLogs        AuditLog[]
+  refreshTokens    RefreshToken[] // Ajout de la relation avec RefreshToken
 
   @@map("users")
 }
@@ -170,4 +165,30 @@ model LoginAttempt {
 
   @@map("login_attempts")
   @@index([ipAddress, createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  jti       String   @unique // JWT ID unique
+  token     String   @db.Text
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked   Boolean  @default(false)
+  issuedAt  DateTime @default(now())
+  expiresAt DateTime
+  
+  @@map("refresh_tokens")
+  @@index([userId])
+  @@index([jti])
+}
+
+model BlacklistedToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  jti       String   @unique // JWT ID du token révoqué
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("blacklisted_tokens")
+  @@index([jti])
+  @@index([expiresAt])
 }

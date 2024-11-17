@@ -1,24 +1,18 @@
+// auth.middleware.ts
 import type { Context, Next } from "koa";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/database";
 import { AUTH_CONFIG } from "../config/auth.config";
+import { TokenService } from "../services/token.service";
 import type { JWTTPayload } from "../types/auth.types";
 
 export async function authenticateToken(ctx: Context, next: Next): Promise<void> {
   try {
-    // Vérifier tous les cookies disponibles
-    const token = ctx.cookies.get("access_token");
-    
-    if (process.env.NODE_ENV === "development") {
-      console.log({
-        allCookies: ctx.headers.cookie,
-        extractedToken: token,
-        headers: ctx.headers,
-      });
-    }
-    
-    if (!token) {
-      ctx.status = 401; // Changé de 410 à 401 pour être plus standard
+    const accessToken = ctx.cookies.get("access_token");
+    const refreshToken = ctx.cookies.get("refresh_token");
+
+    if (!accessToken) {
+      ctx.status = 401;
       ctx.body = { 
         success: false, 
         message: "Non authentifié"
@@ -26,46 +20,98 @@ export async function authenticateToken(ctx: Context, next: Next): Promise<void>
       return;
     }
 
-    const payload = jwt.verify(token, AUTH_CONFIG.jwt.secret) as JWTTPayload;
-    
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { 
-        id: true, 
-        status: true, 
-        twoFactorStatus: true, 
-        role: true 
-      },
-    });
+    try {
+      // Vérifier si le token est blacklisté
+      const isBlacklisted = await TokenService.isTokenBlacklisted(accessToken);
+      if (isBlacklisted) {
+        throw new Error('Token blacklisté');
+      }
 
-    if (!user || user.status === "BLOCKED") {
-      ctx.status = 401;
-      ctx.body = { 
-        success: false, 
-        message: user ? "Utilisateur bloqué" : "Utilisateur non trouvé"
+      // Vérifier le token
+      const payload = jwt.verify(accessToken, AUTH_CONFIG.jwt.secret) as JWTTPayload;
+      
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { 
+          id: true, 
+          status: true, 
+          twoFactorStatus: true, 
+          role: true 
+        },
+      });
+
+      if (!user || user.status === "BLOCKED") {
+        ctx.status = 401;
+        ctx.body = { 
+          success: false, 
+          message: user ? "Utilisateur bloqué" : "Utilisateur non trouvé"
+        };
+        return;
+      }
+
+      ctx.state.user = {
+        id: user.id,
+        role: user.role,
+        twoFactorStatus: user.twoFactorStatus,
+        status: user.status,
       };
-      return;
-    }
 
-    ctx.state.user = {
-      id: user.id,
-      role: user.role,
-      twoFactorStatus: user.twoFactorStatus,
-      status: user.status,
-    };
+      await next();
+    } catch (error) {
+      // Si le token est expiré et qu'un refresh token est disponible
+      if (error instanceof jwt.TokenExpiredError && refreshToken) {
+        const newTokens = await TokenService.refreshTokens(refreshToken);
+        
+        if (newTokens) {
+          // Mettre à jour les cookies
+          ctx.cookies.set("access_token", newTokens.accessToken, AUTH_CONFIG.cookie);
+          ctx.cookies.set("refresh_token", newTokens.refreshToken, AUTH_CONFIG.cookie);
+          
+          // Réessayer la vérification avec le nouveau token
+          const payload = jwt.verify(newTokens.accessToken, AUTH_CONFIG.jwt.secret) as JWTTPayload;
+          
+          const user = await prisma.user.findUnique({
+            where: { id: payload.userId },
+            select: { 
+              id: true, 
+              status: true, 
+              twoFactorStatus: true, 
+              role: true 
+            },
+          });
 
-    await next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
+          if (!user || user.status === "BLOCKED") {
+            ctx.status = 401;
+            ctx.body = { 
+              success: false, 
+              message: user ? "Utilisateur bloqué" : "Utilisateur non trouvé"
+            };
+            return;
+          }
+
+          ctx.state.user = {
+            id: user.id,
+            role: user.role,
+            twoFactorStatus: user.twoFactorStatus,
+            status: user.status,
+          };
+
+          await next();
+          return;
+        }
+      }
+
+      // En cas d'erreur, supprimer les cookies
+      ctx.cookies.set("access_token", "", { ...AUTH_CONFIG.cookie, maxAge: 0 });
+      ctx.cookies.set("refresh_token", "", { ...AUTH_CONFIG.cookie, maxAge: 0 });
+
       ctx.status = 401;
       ctx.body = {
         success: false,
         message: "Token invalide ou expiré"
       };
-      return;
     }
-
-    // Pour toute autre erreur
+  } catch (error) {
     ctx.status = 500;
     ctx.body = {
       success: false,
